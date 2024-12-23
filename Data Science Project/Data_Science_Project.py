@@ -1,5 +1,13 @@
 import pandas as pd  # type: ignore
 from sklearn.preprocessing import LabelEncoder #type: ignore
+from sklearn.preprocessing import StandardScaler #type: ignore
+from sklearn.ensemble import RandomForestClassifier #type: ignore
+from sklearn.linear_model import LogisticRegression #type: ignore
+from sklearn.pipeline import Pipeline #type: ignore
+from sklearn.compose import ColumnTransformer#type: ignore
+from sklearn.impute import SimpleImputer #type: ignore
+from sklearn.model_selection import train_test_split #type: ignore
+from sklearn.model_selection import KFold, cross_val_score #type: ignore
 
 def EncodeLabel(column,df):
     label_encoder = LabelEncoder()
@@ -17,11 +25,11 @@ df = pd.read_csv("oscars_df.csv")
 
 #drop unnecessary columns
 df = df.drop(columns=["Movie Info","Genres","Critic Consensus","Authors","Actors","Original Release Date",
-                      "Streaming Release Date","Film ID"])
+                      "Streaming Release Date","Film ID","Film","Oscar Year", "Unnamed: 0","Film Studio/Producer(s)","Production Company"])
 
 #fill empty columns
 df["Directors"] = df["Directors"].fillna(df["Directors"].mode()[0])
-df["Production Company"] = df["Production Company"].fillna("Unknown")
+#df["Production Company"] = df["Production Company"].fillna("Unknown")
 df["Audience Rating"] = df["Audience Rating"].fillna(round(df["Audience Rating"].mean()))
 df["Audience Status"] = df["Audience Status"].fillna(df["Audience Status"].mode()[0])
 df["Audience Count"] = df["Audience Count"].ffill()
@@ -63,8 +71,11 @@ for index, i in enumerate(nominees):
 
 df["Nominee"] = nominees
 
+df = df.drop(columns=["Nominee"])
+
 #type casting
 df["Audience Rating"] = df["Audience Rating"].astype(int)
+df['IMDB Votes'] = df['IMDB Votes'].str.replace(',', '').astype(int)
 
 #director labeling
 df = EncodeLabel("Directors",df)
@@ -74,6 +85,26 @@ df.to_csv("new_oscars_data.csv", index = False)
 oscar_winner_count = df["Winner"].sum()
 
 print(oscar_winner_count)
+
+X = df.drop(columns = ["Winner"])
+y = df["Winner"]
+
+model = RandomForestClassifier(random_state=42)
+
+kf = KFold(n_splits=5, shuffle=True, random_state=42)  
+
+print(X.dtypes)
+
+# Evaluate the model
+scores = cross_val_score(model, X, y, cv=kf, scoring='accuracy')  
+
+# Print Scores
+print("Cross-validation scores for each fold:", scores)
+print("Mean accuracy:", scores.mean())
+
+
+
+
 
 
 
