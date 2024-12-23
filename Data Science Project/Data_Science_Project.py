@@ -10,7 +10,6 @@ from sklearn.model_selection import train_test_split #type: ignore
 from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict,GridSearchCV #type: ignore
 from sklearn.metrics import confusion_matrix #type: ignore
 from sklearn.tree import DecisionTreeClassifier
-import numpy as np
 
 #functions
 def ExtractConfusionMatrix(y,y_pred):
