@@ -29,8 +29,11 @@ df["Tomatometer Status"] = df["Tomatometer Status"].fillna(df["Tomatometer Statu
 df["Tomatometer Rating"] = df['Tomatometer Rating'].fillna(round(df["Tomatometer Rating"].mean()))
 df["Content Rating"] = df["Content Rating"].fillna(df["Content Rating"].mode()[0])
 df["Tomatometer Count"] = df["Tomatometer Count"].bfill()
+df["Tomatometer Count"] = df["Tomatometer Count"].ffill()
 df["Tomatometer Top Critics Count"] = df["Tomatometer Top Critics Count"].bfill()
+df["Tomatometer Top Critics Count"] = df["Tomatometer Top Critics Count"].ffill()
 df["Tomatometer Fresh Critics Count"] = df["Tomatometer Fresh Critics Count"].bfill()
+df["Tomatometer Fresh Critics Count"] = df["Tomatometer Fresh Critics Count"].ffill()
 df["Tomatometer Rotten Critics Count"] = df["Tomatometer Rotten Critics Count"].ffill()
 
 
@@ -38,9 +41,6 @@ df["Tomatometer Rotten Critics Count"] = df["Tomatometer Rotten Critics Count"].
 df_genres = df["Movie Genre"].str.get_dummies(sep = ",")
 df = df.join(df_genres)
 df = df.drop(columns=["Movie Genre"])
-
-#oscar - nominee discrimination
-df = Discriminate("Award",df)
 
 #rotten status discrimination
 df = Discriminate("Tomatometer Status",df)
@@ -50,6 +50,9 @@ df = Discriminate("Audience Status",df)
 
 #content rating discrimination
 df = Discriminate("Content Rating",df)
+
+#oscar - nominee discrimination
+df = Discriminate("Award",df)
 
 #nominee handling
 nominees = df["Nominee"].tolist()
