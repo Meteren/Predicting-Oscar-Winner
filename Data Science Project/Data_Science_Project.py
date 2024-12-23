@@ -155,7 +155,7 @@ cm_dt = ExtractConfusionMatrix(y,y_pred_dt)
 print(f"Model accuracy: {accuracy}")
 print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
-print("Confusion Matrix for Logistic Regression:")
+print("Confusion Matrix for Decision Tree:")
 print(cm_dt)
 
 #Random forest
@@ -169,7 +169,7 @@ cm_rf = ExtractConfusionMatrix(y,y_pred_rf)
 print(f"Model accuracy: {accuracy}")
 print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
-print("Confusion Matrix for Logistic Regression:")
+print("Confusion Matrix for Random Forest:")
 print(cm_rf)
 
 
