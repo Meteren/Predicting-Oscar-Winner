@@ -1,13 +1,12 @@
 import pandas as pd  # type: ignore
 from sklearn.preprocessing import LabelEncoder #type: ignore
-from sklearn.preprocessing import StandardScaler #type: ignore
+from sklearn.preprocessing import StandardScaler,RobustScaler #type: ignore
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier #type: ignore
 from sklearn.linear_model import LogisticRegression,LinearRegression #type: ignore
 from sklearn.pipeline import Pipeline #type: ignore
 from sklearn.compose import ColumnTransformer#type: ignore
 from sklearn.impute import SimpleImputer #type: ignore
-from sklearn.model_selection import train_test_split #type: ignore
-from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict,GridSearchCV #type: ignore
+from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict #type: ignore
 from sklearn.metrics import confusion_matrix #type: ignore
 from sklearn.tree import DecisionTreeClassifier
 
@@ -59,7 +58,9 @@ df["Tomatometer Rotten Critics Count"] = df["Tomatometer Rotten Critics Count"].
 df_genres = df["Movie Genre"].str.get_dummies(sep = ",")
 df = df.join(df_genres)
 df = df.drop(columns=["Movie Genre"])
-df = df.drop(columns=["Comdey"])
+df = df.drop(columns=["Comdey","Thriller","Western","Sport",
+                      "Horror","Film-Noir","Animation","Sci-Fi","Biography","Family","Fantasy"])
+
 
 #rotten status discrimination
 df = Discriminate("Tomatometer Status",df)
@@ -107,7 +108,7 @@ y = df["Winner"]
 
 #preprocessing
 preprocessor = ColumnTransformer(transformers=[
-    ("num",StandardScaler(),["Movie Time","IMDB Rating","IMDB Votes","Tomatometer Rating","Tomatometer Count","Audience Rating","Audience Count",
+    ("num",RobustScaler(),["Movie Time","IMDB Rating","IMDB Votes","Tomatometer Rating","Tomatometer Count","Audience Rating","Audience Count",
                             "Tomatometer Top Critics Count","Tomatometer Fresh Critics Count"]),
     ("cat",SimpleImputer(strategy="most_frequent"),["Directors"])],remainder="passthrough")
 
@@ -135,12 +136,14 @@ y_pred_grad_boosting = cross_val_predict(model_grad_boosting, X, y, cv=kf)
 accuracy = GetScore(model_grad_boosting,X,y,kf,"accuracy")
 precision = GetScore(model_grad_boosting,X,y,kf,"precision")
 recall = GetScore(model_grad_boosting,X,y,kf,"recall")
+f1 = GetScore(model_grad_boosting,X,y,kf,"f1")
 cm_grad_boosting = ExtractConfusionMatrix(y,y_pred_grad_boosting)
 
 # print grad boosting
 print(f"Model accuracy: {accuracy}")
 print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
+print(f"F1 Score: {f1}")
 print("Confusion Matrix for GradBoosting:")
 print(cm_grad_boosting)
 
@@ -149,26 +152,30 @@ y_pred_dt = cross_val_predict(model_decision_tree, X, y, cv=kf)
 accuracy = GetScore(model_decision_tree,X,y,kf,"accuracy")
 precision = GetScore(model_decision_tree,X,y,kf,"precision")
 recall = GetScore(model_decision_tree,X,y,kf,"recall")
+f1 = GetScore(model_decision_tree,X,y,kf,"f1")
 cm_dt = ExtractConfusionMatrix(y,y_pred_dt)
 
 # Print decision tree
 print(f"Model accuracy: {accuracy}")
 print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
+print(f"F1 Score: {f1}")
 print("Confusion Matrix for Decision Tree:")
 print(cm_dt)
 
-#Random forest
+# Generate confusion matrix for Random Forest
 y_pred_rf = cross_val_predict(model_random_forest, X, y, cv=kf)
 accuracy = GetScore(model_random_forest,X,y,kf,"accuracy")
 precision = GetScore(model_random_forest,X,y,kf,"precision")
 recall = GetScore(model_random_forest,X,y,kf,"recall")
+f1 = GetScore(model_random_forest,X,y,kf,"f1")
 cm_rf = ExtractConfusionMatrix(y,y_pred_rf)
 
-# Generate confusion matrix for Random Forest
+#print
 print(f"Model accuracy: {accuracy}")
 print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
+print(f"F1 Score: {f1}")
 print("Confusion Matrix for Random Forest:")
 print(cm_rf)
 
