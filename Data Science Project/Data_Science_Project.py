@@ -44,7 +44,6 @@ df["Tomatometer Fresh Critics Count"] = df["Tomatometer Fresh Critics Count"].bf
 df["Tomatometer Fresh Critics Count"] = df["Tomatometer Fresh Critics Count"].ffill()
 df["Tomatometer Rotten Critics Count"] = df["Tomatometer Rotten Critics Count"].ffill()
 
-
 #genre discrimination
 df_genres = df["Movie Genre"].str.get_dummies(sep = ",")
 df = df.join(df_genres)
@@ -84,6 +83,24 @@ oscar_winner_count = df["Winner"].sum()
 
 print(oscar_winner_count)
 
+# Get the indices of non-winner rows
+non_winners_indices = df[df["Winner"] == 0].index
+
+# Specify the number or proportion of non-winners to remove
+# For example, remove 50% of non-winners
+num_to_remove = int(len(non_winners_indices) * 0.5)
+
+# Randomly select a subset of non-winner indices to drop
+indices_to_drop = non_winners_indices.to_series().sample(n=300, random_state=42)
+
+# Drop the selected indices from the DataFrame
+df = df.drop(index=indices_to_drop)
+
+# Reset the index after filtering
+df = df.reset_index(drop=True)
+
+df.to_csv("new_oscars_data.csv",index = False)
+
 X = df.drop(columns = ["Winner"])
 y = df["Winner"]
 
@@ -96,18 +113,20 @@ preprocessor = ColumnTransformer(transformers=[
  
 model_lr = Pipeline(steps=[
     ("preprocessor", preprocessor),
-   ("classifier", LogisticRegression(solver="saga", max_iter=10000))
+   ("classifier", LogisticRegression(solver="saga", max_iter=50000))
 ])
 
 model_rf = Pipeline(steps=[
     ("preprocessor",preprocessor),
     ("classifier",RandomForestClassifier())])
 
+model_rf_sup = RandomForestClassifier(random_state=42,class_weight="balanced")
+
    
 kf = KFold(n_splits=5, shuffle=True, random_state=42)  
 
 # Evaluate the model
-y_pred_rf = cross_val_predict(model_rf, X, y, cv=kf)
+y_pred_rf = cross_val_predict(model_rf_sup, X, y, cv=kf)
 
 lr_score = cross_val_score(model_rf,X,y,cv = kf, scoring="accuracy")
 
@@ -121,9 +140,13 @@ cm_rf = confusion_matrix(y, y_pred_rf)
 print("Confusion Matrix for Random Forest:")
 print(cm_rf)
 
+#Generate confusion matrix for Random Forest
+y_pred_lr = cross_val_predict(model_lr, X, y, cv=kf)
+
+cm_lr = confusion_matrix(y,y_pred_lr)
+
 # Print Scores
-#print("Cross-validation scores for each fold:", y_pred_lr)
-#print("Mean accuracy:", y_pred_lr.mean())
+print(cm_lr)
 
 
 
