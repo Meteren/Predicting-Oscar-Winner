@@ -123,6 +123,11 @@ model_decision_tree = Pipeline(steps=[
    ("classifier", DecisionTreeClassifier())
 ])
 
+model_random_forest = Pipeline(steps=[
+    ("preprocessor", preprocessor),
+   ("classifier", RandomForestClassifier())
+])
+
 #k-fold 
 kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)  
 
@@ -140,7 +145,7 @@ print(f"Model Recall: {recall}")
 print("Confusion Matrix for GradBoosting:")
 print(cm_grad_boosting)
 
-#Generate confusion matrix for Logistic Regression
+#Generate confusion matrix for Decision tree
 y_pred_dt = cross_val_predict(model_decision_tree, X, y, cv=kf)
 accuracy = GetScore(model_decision_tree,X,y,kf,"accuracy")
 precision = GetScore(model_decision_tree,X,y,kf,"precision")
@@ -153,6 +158,20 @@ print(f"Model Precision: {precision}")
 print(f"Model Recall: {recall}")
 print("Confusion Matrix for Logistic Regression:")
 print(cm_dt)
+
+#Random forest
+y_pred_rf = cross_val_predict(model_random_forest, X, y, cv=kf)
+accuracy = GetScore(model_random_forest,X,y,kf,"accuracy")
+precision = GetScore(model_random_forest,X,y,kf,"precision")
+recall = GetScore(model_random_forest,X,y,kf,"recall")
+cm_rf = ExtractConfusionMatrix(y,y_pred_rf)
+
+# Generate confusion matrix for Random Forest
+print(f"Model accuracy: {accuracy}")
+print(f"Model Precision: {precision}")
+print(f"Model Recall: {recall}")
+print("Confusion Matrix for Logistic Regression:")
+print(cm_rf)
 
 
 
