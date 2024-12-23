@@ -1,14 +1,25 @@
 import pandas as pd  # type: ignore
 from sklearn.preprocessing import LabelEncoder #type: ignore
 from sklearn.preprocessing import StandardScaler #type: ignore
-from sklearn.ensemble import RandomForestClassifier #type: ignore
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier #type: ignore
 from sklearn.linear_model import LogisticRegression,LinearRegression #type: ignore
 from sklearn.pipeline import Pipeline #type: ignore
 from sklearn.compose import ColumnTransformer#type: ignore
 from sklearn.impute import SimpleImputer #type: ignore
 from sklearn.model_selection import train_test_split #type: ignore
-from sklearn.model_selection import KFold, cross_val_score,cross_val_predict #type: ignore
+from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict,GridSearchCV #type: ignore
 from sklearn.metrics import confusion_matrix #type: ignore
+from sklearn.tree import DecisionTreeClassifier
+import numpy as np
+
+#functions
+def ExtractConfusionMatrix(y,y_pred):
+    c_matrix = confusion_matrix(y,y_pred)
+    return c_matrix
+
+def GetScore(model,X,y,kf,type):
+    score = cross_val_score(model,X,y,cv = kf, scoring=type)
+    return score.mean()
 
 def EncodeLabel(column,df):
     label_encoder = LabelEncoder()
@@ -22,6 +33,7 @@ def Discriminate(column,df):
     df = df.drop(columns=[column])
     return df
 
+#read data
 df = pd.read_csv("oscars_df.csv")
 
 #drop unnecessary columns
@@ -48,6 +60,7 @@ df["Tomatometer Rotten Critics Count"] = df["Tomatometer Rotten Critics Count"].
 df_genres = df["Movie Genre"].str.get_dummies(sep = ",")
 df = df.join(df_genres)
 df = df.drop(columns=["Movie Genre"])
+df = df.drop(columns=["Comdey"])
 
 #rotten status discrimination
 df = Discriminate("Tomatometer Status",df)
@@ -79,74 +92,69 @@ df['IMDB Votes'] = df['IMDB Votes'].str.replace(',', '').astype(int)
 #director labeling
 df = EncodeLabel("Directors",df)
 
-oscar_winner_count = df["Winner"].sum()
-
-print(oscar_winner_count)
-
-# Get the indices of non-winner rows
+# Remove some of the movies for model stability
 non_winners_indices = df[df["Winner"] == 0].index
-
-# Specify the number or proportion of non-winners to remove
-# For example, remove 50% of non-winners
 num_to_remove = int(len(non_winners_indices) * 0.5)
-
-# Randomly select a subset of non-winner indices to drop
-indices_to_drop = non_winners_indices.to_series().sample(n=300, random_state=42)
-
-# Drop the selected indices from the DataFrame
+indices_to_drop = non_winners_indices.to_series().sample(n=230, random_state=42)
 df = df.drop(index=indices_to_drop)
-
-# Reset the index after filtering
 df = df.reset_index(drop=True)
 
+#extract to csv
 df.to_csv("new_oscars_data.csv",index = False)
 
+#choose columns
 X = df.drop(columns = ["Winner"])
 y = df["Winner"]
 
-
+#preprocessing
 preprocessor = ColumnTransformer(transformers=[
     ("num",StandardScaler(),["Movie Time","IMDB Rating","IMDB Votes","Tomatometer Rating","Tomatometer Count","Audience Rating","Audience Count",
                             "Tomatometer Top Critics Count","Tomatometer Fresh Critics Count"]),
     ("cat",SimpleImputer(strategy="most_frequent"),["Directors"])],remainder="passthrough")
 
- 
-model_lr = Pipeline(steps=[
+#Gradient Boosting Model 
+model_grad_boosting = Pipeline(steps=[
+    ("preprocessor",preprocessor),
+    ("classifier",GradientBoostingClassifier())])
+
+#Logistic Regression Model
+model_decision_tree = Pipeline(steps=[
     ("preprocessor", preprocessor),
-   ("classifier", LogisticRegression(solver="saga", max_iter=50000))
+   ("classifier", DecisionTreeClassifier())
 ])
 
-model_rf = Pipeline(steps=[
-    ("preprocessor",preprocessor),
-    ("classifier",RandomForestClassifier())])
+#k-fold 
+kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)  
 
-model_rf_sup = RandomForestClassifier(random_state=42,class_weight="balanced")
+# Evaluate the grad boosting
+y_pred_grad_boosting = cross_val_predict(model_grad_boosting, X, y, cv=kf)
+accuracy = GetScore(model_grad_boosting,X,y,kf,"accuracy")
+precision = GetScore(model_grad_boosting,X,y,kf,"precision")
+recall = GetScore(model_grad_boosting,X,y,kf,"recall")
+cm_grad_boosting = ExtractConfusionMatrix(y,y_pred_grad_boosting)
 
-   
-kf = KFold(n_splits=5, shuffle=True, random_state=42)  
+# print grad boosting
+print(f"Model accuracy: {accuracy}")
+print(f"Model Precision: {precision}")
+print(f"Model Recall: {recall}")
+print("Confusion Matrix for GradBoosting:")
+print(cm_grad_boosting)
 
-# Evaluate the model
-y_pred_rf = cross_val_predict(model_rf_sup, X, y, cv=kf)
+#Generate confusion matrix for Logistic Regression
+y_pred_dt = cross_val_predict(model_decision_tree, X, y, cv=kf)
+accuracy = GetScore(model_decision_tree,X,y,kf,"accuracy")
+precision = GetScore(model_decision_tree,X,y,kf,"precision")
+recall = GetScore(model_decision_tree,X,y,kf,"recall")
+cm_dt = ExtractConfusionMatrix(y,y_pred_dt)
 
-lr_score = cross_val_score(model_rf,X,y,cv = kf, scoring="accuracy")
+# Print decision tree
+print(f"Model accuracy: {accuracy}")
+print(f"Model Precision: {precision}")
+print(f"Model Recall: {recall}")
+print("Confusion Matrix for Logistic Regression:")
+print(cm_dt)
 
-# Check the shape of y_pred_lr and y
-print(lr_score)
-print(f"Shape of true labels: {y.shape}")
-print(f"Shape of predicted labels (Random Forest): {y_pred_rf.shape}")
 
-# Generate confusion matrix for Logistic Regression
-cm_rf = confusion_matrix(y, y_pred_rf)
-print("Confusion Matrix for Random Forest:")
-print(cm_rf)
-
-#Generate confusion matrix for Random Forest
-y_pred_lr = cross_val_predict(model_lr, X, y, cv=kf)
-
-cm_lr = confusion_matrix(y,y_pred_lr)
-
-# Print Scores
-print(cm_lr)
 
 
 
