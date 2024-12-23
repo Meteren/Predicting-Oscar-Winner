@@ -9,8 +9,18 @@ from sklearn.impute import SimpleImputer #type: ignore
 from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict #type: ignore
 from sklearn.metrics import confusion_matrix #type: ignore
 from sklearn.tree import DecisionTreeClassifier
+import seaborn as sns #type: ignore
+import matplotlib.pyplot as plt #type: ignore
 
 #functions
+def PlotConfusionMatrix(cm, title="Confusion Matrix"):
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["No", "Yes"], yticklabels=["No", "Yes"])
+    plt.title(title)
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.show()
+
 def ExtractConfusionMatrix(y,y_pred):
     c_matrix = confusion_matrix(y,y_pred)
     return c_matrix
@@ -146,6 +156,7 @@ print(f"Model Recall: {recall}")
 print(f"F1 Score: {f1}")
 print("Confusion Matrix for GradBoosting:")
 print(cm_grad_boosting)
+PlotConfusionMatrix(cm_grad_boosting, title="Gradient Boosting Confusion Matrix")
 
 #Generate confusion matrix for Decision tree
 y_pred_dt = cross_val_predict(model_decision_tree, X, y, cv=kf)
@@ -162,6 +173,7 @@ print(f"Model Recall: {recall}")
 print(f"F1 Score: {f1}")
 print("Confusion Matrix for Decision Tree:")
 print(cm_dt)
+PlotConfusionMatrix(cm_dt, title="Decision Tree Confusion Matrix")
 
 # Generate confusion matrix for Random Forest
 y_pred_rf = cross_val_predict(model_random_forest, X, y, cv=kf)
@@ -178,6 +190,7 @@ print(f"Model Recall: {recall}")
 print(f"F1 Score: {f1}")
 print("Confusion Matrix for Random Forest:")
 print(cm_rf)
+PlotConfusionMatrix(cm_rf, title="Random Forest Confusion Matrix")
 
 
 
