@@ -12,6 +12,8 @@ from sklearn.metrics import confusion_matrix #type: ignore
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns #type: ignore
 import matplotlib.pyplot as plt #type: ignore
+from pandas.plotting import scatter_matrix
+from scipy.stats import shapiro
 
 #functions
 def PlotConfusionMatrix(cm, title="Confusion Matrix"):
@@ -195,7 +197,6 @@ PlotConfusionMatrix(cm_rf, title="Random Forest Confusion Matrix")
 
 
 #take input
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 model_grad_boosting.fit(X_train, y_train)
@@ -216,6 +217,8 @@ while(True):
     if movie_index >= X_test.shape[0]:
         print("Row count is exceeded. Try again.")
         continue
+    if movie_index == -1:
+        break
 
     movie_data = X_test.iloc[movie_index:movie_index+1]  
 
@@ -231,8 +234,41 @@ while(True):
     print(f"Random Forest Prediction: {'Winner' if prediction_random_forest[0] == 1 else 'Not a Winner'}")
 
 
+#Regression
+sns.regplot(x='IMDB Rating', y='Audience Rating', data=df)
+plt.title('Regression Plot between IMDB and Audience Ratings')
+plt.show()
 
+#Violin
+sns.violinplot(x='Winner', y='IMDB Rating', data=df)
+plt.title('Violin Plot of IMDB Ratings by Winners')
+plt.show()
 
+#Scatter Matrix
+scatter_matrix(df[['IMDB Rating', 'Audience Rating', 'Tomatometer Rating', 'Movie Time']], figsize=(12, 12), diagonal='kde')
+plt.show()
+
+#Histogram and Boxplot for all numerical columns
+numerical_columns = df.select_dtypes(include=['int64', 'float64']).columns
+for col in numerical_columns:
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    sns.histplot(df[col], kde=True, ax=axes[0])
+    axes[0].set_title(f'Histogram of {col}')
+    sns.boxplot(x=df[col], ax=axes[1])
+    axes[1].set_title(f'Boxplot of {col}')
+    plt.tight_layout()
+    plt.show()
+
+# Print grad boosting
+print(f"Model accuracy: {accuracy}")
+print(f"Model Precision: {precision}")
+print(f"Model Recall: {recall}")
+print("Confusion Matrix for GradBoosting:")
+print(cm_grad_boosting)
+
+#Shapiro-Wilk Test
+stat, p = shapiro(df['IMDB Rating'])
+print(f'Shapiro-Wilk Test: stat={stat}, p={p}')
 
 
 
