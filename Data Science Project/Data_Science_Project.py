@@ -1,3 +1,4 @@
+from numpy import dtype
 import pandas as pd  # type: ignore
 from sklearn.preprocessing import LabelEncoder #type: ignore
 from sklearn.preprocessing import StandardScaler,RobustScaler #type: ignore
@@ -191,6 +192,41 @@ print(f"F1 Score: {f1}")
 print("Confusion Matrix for Random Forest:")
 print(cm_rf)
 PlotConfusionMatrix(cm_rf, title="Random Forest Confusion Matrix")
+
+
+#take input
+
+while(True):
+    try:
+        movie_index = input("Enter Movie Index:")
+        movie_index = int(movie_index)
+        break
+    except ValueError:
+        print("Wront value! Try again.")
+        
+movie_data = X.iloc[movie_index:movie_index+1]  
+
+model_grad_boosting.fit(X,y)
+
+model_decision_tree.fit(X,y)
+
+model_random_forest.fit(X,y)
+
+prediction_grad_boosting = model_grad_boosting.predict(movie_data)
+
+prediction_decision_tree = model_decision_tree.predict(movie_data)
+
+prediction_random_forest = model_random_forest.predict(movie_data)
+
+print(f"Real value: {'Winner' if y.iloc[movie_index] == 1 else 'Not a Winner'}")
+print(f"Gradient Boosting Prediction: {'Winner' if prediction_grad_boosting[0] == 1 else 'Not a Winner'}")
+print(f"Decision Tree Prediction: {'Winner' if prediction_decision_tree[0] == 1 else 'Not a Winner'}")
+print(f"Random Forest Prediction: {'Winner' if prediction_random_forest[0] == 1 else 'Not a Winner'}")
+
+
+
+
+
 
 
 
