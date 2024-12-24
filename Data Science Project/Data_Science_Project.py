@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression,LinearRegression #type: igno
 from sklearn.pipeline import Pipeline #type: ignore
 from sklearn.compose import ColumnTransformer#type: ignore
 from sklearn.impute import SimpleImputer #type: ignore
-from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict #type: ignore
+from sklearn.model_selection import StratifiedKFold, cross_val_score,cross_val_predict,train_test_split #type: ignore
 from sklearn.metrics import confusion_matrix #type: ignore
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns #type: ignore
@@ -196,32 +196,39 @@ PlotConfusionMatrix(cm_rf, title="Random Forest Confusion Matrix")
 
 #take input
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model_grad_boosting.fit(X_train, y_train)
+model_decision_tree.fit(X_train, y_train)
+model_random_forest.fit(X_train, y_train)
+
 while(True):
-    try:
-        movie_index = input("Enter Movie Index:")
-        movie_index = int(movie_index)
-        break
-    except ValueError:
-        print("Wront value! Try again.")
-        
-movie_data = X.iloc[movie_index:movie_index+1]  
+    while(True):
+        try:
+            movie_index = input("Enter Movie Index:")
+            movie_index = int(movie_index)
+            break
+        except ValueError:
+            print("Wront value! Try again.")
 
-model_grad_boosting.fit(X,y)
+    print(f"Test data row count:{X_test.shape[0]}")
 
-model_decision_tree.fit(X,y)
+    if movie_index >= X_test.shape[0]:
+        print("Row count is exceeded. Try again.")
+        continue
 
-model_random_forest.fit(X,y)
+    movie_data = X_test.iloc[movie_index:movie_index+1]  
 
-prediction_grad_boosting = model_grad_boosting.predict(movie_data)
+    prediction_grad_boosting = model_grad_boosting.predict(movie_data)
 
-prediction_decision_tree = model_decision_tree.predict(movie_data)
+    prediction_decision_tree = model_decision_tree.predict(movie_data)
 
-prediction_random_forest = model_random_forest.predict(movie_data)
+    prediction_random_forest = model_random_forest.predict(movie_data)
 
-print(f"Real value: {'Winner' if y.iloc[movie_index] == 1 else 'Not a Winner'}")
-print(f"Gradient Boosting Prediction: {'Winner' if prediction_grad_boosting[0] == 1 else 'Not a Winner'}")
-print(f"Decision Tree Prediction: {'Winner' if prediction_decision_tree[0] == 1 else 'Not a Winner'}")
-print(f"Random Forest Prediction: {'Winner' if prediction_random_forest[0] == 1 else 'Not a Winner'}")
+    print(f"Real value: {'Winner' if y_test.iloc[movie_index] == 1 else 'Not a Winner'}")
+    print(f"Gradient Boosting Prediction: {'Winner' if prediction_grad_boosting[0] == 1 else 'Not a Winner'}")
+    print(f"Decision Tree Prediction: {'Winner' if prediction_decision_tree[0] == 1 else 'Not a Winner'}")
+    print(f"Random Forest Prediction: {'Winner' if prediction_random_forest[0] == 1 else 'Not a Winner'}")
 
 
 
